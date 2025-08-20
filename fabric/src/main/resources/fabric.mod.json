@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "let_me_spawn",
+  "version": "${version}",
+  "name": "Let Me Spawn",
+  "description": "A Cobblemon side-mod that allows you to configure conditions (ultra-rare Pokémon by default) under which Pokémon can bypass the per-chunk Pokémon limit and spawn regardless",
+  "authors": [
+    "gatekeep06"
+  ],
+  "contact": {
+    "homepage": "https://modrinth.com/mod/cobblemon-let-me-spawn",
+    "sources": ""
+  },
+  "license": "MPL-2.0",
+  "icon": "assets/let_me_spawn/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.metacontent.fabric.LetMeSpawnFabric"
+    ]
+  },
+  "mixins": [
+    "let_me_spawn.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.17.2",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

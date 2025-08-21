@@ -11,13 +11,7 @@ import com.cobblemon.mod.common.platform.events.PlatformEvents
 import com.cobblemon.mod.common.util.asResource
 import com.cobblemon.mod.common.util.isBoxLoaded
 import com.cobblemon.mod.common.util.toVec3f
-import com.metacontent.config.BucketSpawnPermit
-import com.metacontent.config.CompositeSpawnPermit
-import com.metacontent.config.ExcessiveSpawnPermit
-import com.metacontent.config.LevelSpawnPermit
-import com.metacontent.config.PermitConfig
-import com.metacontent.config.PlayerSpawnPermit
-import com.metacontent.config.SpawnPermitAdapter
+import com.metacontent.config.*
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.Vec3
 import org.slf4j.Logger
@@ -46,7 +40,8 @@ object LetMeSpawn {
                 val areaBox = AABB.ofSize(
                     Vec3(
                         constrainedArea.getCenter().toVec3f()
-                    ), CHUNK_REACH * 16.0 * 2, 1000.0, CHUNK_REACH * 16.0 * 2)
+                    ), CHUNK_REACH * 16.0 * 2, 1000.0, CHUNK_REACH * 16.0 * 2
+                )
                 if (!constrainedArea.world.isBoxLoaded(areaBox)) {
                     return null
                 }
@@ -78,13 +73,31 @@ object LetMeSpawn {
     }
 
     fun registerPermitTypes() {
-        ExcessiveSpawnPermit.register(BucketSpawnPermit.TYPE) { json -> json.get("bucket")?.asString?.let { BucketSpawnPermit(it) } }
-        ExcessiveSpawnPermit.register(PlayerSpawnPermit.TYPE) { json -> json.get("player")?.asString?.let { PlayerSpawnPermit(it) } }
-        ExcessiveSpawnPermit.register(LevelSpawnPermit.TYPE) { json -> json.get("level")?.asString?.let { LevelSpawnPermit(it.asResource()) } }
-        ExcessiveSpawnPermit.register(CompositeSpawnPermit.TYPE) { json ->
-            json.get("permits")?.asJsonArray?.mapNotNull {
-                SpawnPermitAdapter.deserialize(it.asJsonObject, null, null)
-            }?.let { CompositeSpawnPermit(it) }
-        }
+        ExcessiveSpawnPermit.register(
+            BucketSpawnPermit.TYPE,
+            { json -> json.get("bucket")?.asString?.let { BucketSpawnPermit(it) } }
+        )
+        ExcessiveSpawnPermit.register(
+            PlayerSpawnPermit.TYPE,
+            { json -> json.get("name")?.asString?.let { PlayerSpawnPermit(it) } }
+        )
+        ExcessiveSpawnPermit.register(
+            LevelSpawnPermit.TYPE,
+            { json -> json.get("level")?.asString?.let { LevelSpawnPermit(it.asResource()) } },
+            { permit, json ->
+                (permit as? LevelSpawnPermit)?.level?.toString()?.let {
+                    json.addProperty("level", it)
+                    json
+                }
+            }
+        )
+        ExcessiveSpawnPermit.register(
+            CompositeSpawnPermit.TYPE,
+            { json ->
+                json.get("permits")?.asJsonArray?.mapNotNull {
+                    SpawnPermitAdapter.deserialize(it.asJsonObject, null, null)
+                }?.let { CompositeSpawnPermit(it) }
+            }
+        )
     }
 }

@@ -7,16 +7,25 @@ import net.minecraft.resources.ResourceLocation
 
 abstract class ExcessiveSpawnPermit() {
     companion object {
-        internal val types = mutableMapOf<String, (JsonObject) -> ExcessiveSpawnPermit?>()
+        internal val types = mutableMapOf<String, PermitAdapter>()
 
-        fun register(type: String, parser: (JsonObject) -> ExcessiveSpawnPermit?): Boolean {
-            return types.put(type, parser) == null
+        fun register(
+            type: String,
+            deserializer: (JsonObject) -> ExcessiveSpawnPermit?,
+            serializer: ((ExcessiveSpawnPermit?, JsonObject) -> JsonObject?)? = null
+        ): Boolean {
+            return types.put(type, PermitAdapter(deserializer, serializer)) == null
         }
     }
 
     abstract val type: String
 
     abstract fun isPermitted(cause: SpawnCause): Boolean
+
+    internal data class PermitAdapter(
+        val deserializer: (JsonObject) -> ExcessiveSpawnPermit?,
+        val serializer: ((ExcessiveSpawnPermit?, JsonObject) -> JsonObject?)?
+    )
 }
 
 class BucketSpawnPermit(val bucket: String) : ExcessiveSpawnPermit() {
@@ -36,7 +45,7 @@ class PlayerSpawnPermit(val name: String) : ExcessiveSpawnPermit() {
 
     override val type = TYPE
 
-    override fun isPermitted(cause: SpawnCause) = cause.entityUUID?.getPlayer()?.name?.string == name
+    override fun isPermitted(cause: SpawnCause) = cause.entityUUID?.getPlayer()?.name?.string?.lowercase() == name.lowercase()
 }
 
 class LevelSpawnPermit(val level: ResourceLocation) : ExcessiveSpawnPermit() {

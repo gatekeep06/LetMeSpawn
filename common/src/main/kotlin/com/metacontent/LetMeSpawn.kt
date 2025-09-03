@@ -55,7 +55,7 @@ object LetMeSpawn {
                 val chunksCovered = CHUNK_REACH * CHUNK_REACH
                 val areChunksFilled = numberNearby.toFloat() / chunksCovered >= Cobblemon.config.pokemonPerChunk
 
-                if (areChunksFilled && !config.permits.any { it?.isPermitted(cause) == true }) {
+                if (areChunksFilled && !config.permits.any { it?.isPermitted(cause, numberNearby) == true }) {
                     return null
                 }
 
@@ -75,15 +75,15 @@ object LetMeSpawn {
     fun registerPermitTypes() {
         ExcessiveSpawnPermit.register(
             BucketSpawnPermit.TYPE,
-            { json -> json.get("bucket")?.asString?.let { BucketSpawnPermit(it) } }
+            { json -> json.get("bucket")?.asString?.let { BucketSpawnPermit(it, json.get("max")?.asInt) } }
         )
         ExcessiveSpawnPermit.register(
             PlayerSpawnPermit.TYPE,
-            { json -> json.get("name")?.asString?.let { PlayerSpawnPermit(it) } }
+            { json -> json.get("name")?.asString?.let { PlayerSpawnPermit(it, json.get("max")?.asInt) } }
         )
         ExcessiveSpawnPermit.register(
             LevelSpawnPermit.TYPE,
-            { json -> json.get("level")?.asString?.let { LevelSpawnPermit(it.asResource()) } },
+            { json -> json.get("level")?.asString?.let { LevelSpawnPermit(it.asResource(), json.get("max")?.asInt) } },
             { permit, json ->
                 (permit as? LevelSpawnPermit)?.level?.toString()?.let {
                     json.addProperty("level", it)

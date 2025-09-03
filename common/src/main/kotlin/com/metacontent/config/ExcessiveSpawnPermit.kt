@@ -20,7 +20,9 @@ abstract class ExcessiveSpawnPermit() {
 
     abstract val type: String
 
-    abstract fun isPermitted(cause: SpawnCause): Boolean
+    abstract val max: Int?
+
+    abstract fun isPermitted(cause: SpawnCause, pokemonAmount: Int): Boolean
 
     internal data class PermitAdapter(
         val deserializer: (JsonObject) -> ExcessiveSpawnPermit?,
@@ -28,34 +30,37 @@ abstract class ExcessiveSpawnPermit() {
     )
 }
 
-class BucketSpawnPermit(val bucket: String) : ExcessiveSpawnPermit() {
+class BucketSpawnPermit(val bucket: String, override val max: Int?) : ExcessiveSpawnPermit() {
     companion object {
         const val TYPE = "bucket"
     }
 
     override val type = TYPE
 
-    override fun isPermitted(cause: SpawnCause) = cause.bucket.name == bucket
+    override fun isPermitted(cause: SpawnCause, pokemonAmount: Int) =
+        cause.bucket.name == bucket && (max == null || max < 0 || pokemonAmount < max)
 }
 
-class PlayerSpawnPermit(val name: String) : ExcessiveSpawnPermit() {
+class PlayerSpawnPermit(val name: String, override val max: Int?) : ExcessiveSpawnPermit() {
     companion object {
         const val TYPE = "player"
     }
 
     override val type = TYPE
 
-    override fun isPermitted(cause: SpawnCause) = cause.entityUUID?.getPlayer()?.name?.string?.lowercase() == name.lowercase()
+    override fun isPermitted(cause: SpawnCause, pokemonAmount: Int) =
+        cause.entityUUID?.getPlayer()?.name?.string?.lowercase() == name.lowercase() && (max == null || max < 0 || pokemonAmount < max)
 }
 
-class LevelSpawnPermit(val level: ResourceLocation) : ExcessiveSpawnPermit() {
+class LevelSpawnPermit(val level: ResourceLocation, override val max: Int?) : ExcessiveSpawnPermit() {
     companion object {
         const val TYPE = "level"
     }
 
     override val type = TYPE
 
-    override fun isPermitted(cause: SpawnCause) = cause.entityWorldId?.location() == level
+    override fun isPermitted(cause: SpawnCause, pokemonAmount: Int) =
+        cause.entityWorldId?.location() == level && (max == null || max < 0 || pokemonAmount < max)
 }
 
 class CompositeSpawnPermit(val permits: List<ExcessiveSpawnPermit>) : ExcessiveSpawnPermit() {
@@ -65,8 +70,20 @@ class CompositeSpawnPermit(val permits: List<ExcessiveSpawnPermit>) : ExcessiveS
 
     override val type = TYPE
 
+    override val max = null
+
     @delegate:Transient
     val groupedPermits by lazy { permits.groupBy { it.type } }
 
-    override fun isPermitted(cause: SpawnCause) = groupedPermits.isNotEmpty() && groupedPermits.all { it.value.any { permit -> permit.isPermitted(cause) } }
+    override fun isPermitted(
+        cause: SpawnCause,
+        pokemonAmount: Int
+    ) = groupedPermits.isNotEmpty() && groupedPermits.all {
+        it.value.any { permit ->
+            permit.isPermitted(
+                cause,
+                pokemonAmount
+            )
+        }
+    }
 }

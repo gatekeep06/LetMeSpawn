@@ -30,6 +30,7 @@ object SpawnPermitAdapter : JsonDeserializer<ExcessiveSpawnPermit>, JsonSerializ
         return if (serializer != null) {
             val json = JsonObject()
             json.addProperty("type", src.type)
+            src.max?.let { json.addProperty("max", it) }
             serializer(src, json)
         } else {
             context?.serialize(src)

@@ -1,11 +1,11 @@
 package com.metacontent
 
 import com.cobblemon.mod.common.Cobblemon
-import com.cobblemon.mod.common.api.spawning.SpawnCause
-import com.cobblemon.mod.common.api.spawning.context.SpawningContext
-import com.cobblemon.mod.common.api.spawning.detail.SpawnDetail
-import com.cobblemon.mod.common.api.spawning.spawner.AreaSpawner
-import com.cobblemon.mod.common.api.spawning.spawner.AreaSpawner.Companion.CHUNK_REACH
+import com.cobblemon.mod.common.api.spawning.detail.SpawnAction
+import com.cobblemon.mod.common.api.spawning.position.calculators.SpawnablePositionCalculator.Companion.prioritizedAreaCalculators
+import com.cobblemon.mod.common.api.spawning.spawner.Spawner
+import com.cobblemon.mod.common.api.spawning.spawner.Spawner.Companion.ENTITY_LIMIT_CHUNK_RANGE
+import com.cobblemon.mod.common.api.spawning.spawner.SpawningZoneInput
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity
 import com.cobblemon.mod.common.platform.events.PlatformEvents
 import com.cobblemon.mod.common.util.asResource
@@ -16,6 +16,7 @@ import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.Vec3
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import kotlin.math.max
 
 object LetMeSpawn {
     const val ID = "let_me_spawn"
@@ -31,44 +32,56 @@ object LetMeSpawn {
         }
     }
 
-    fun runSpawn(areaSpawner: AreaSpawner, cause: SpawnCause): Pair<SpawningContext, SpawnDetail>? {
-        with(areaSpawner) {
-            val area = getArea(cause)
-            val constrainedArea = if (area != null) constrainArea(area) else null
-            if (constrainedArea != null) {
+    @JvmStatic
+    fun calculateSpawnActions(spawner: Spawner, zoneInput: SpawningZoneInput, maxSpawns: Int?): List<SpawnAction<*>> {
+        with(spawner) {
+            val maxSpawns = maxSpawns ?: Cobblemon.config.maximumSpawnsPerPass
+            influences.removeIf { it.isExpired() }
 
-                val areaBox = AABB.ofSize(
-                    Vec3(
-                        constrainedArea.getCenter().toVec3f()
-                    ), CHUNK_REACH * 16.0 * 2, 1000.0, CHUNK_REACH * 16.0 * 2
-                )
-                if (!constrainedArea.world.isBoxLoaded(areaBox)) {
-                    return null
-                }
+            val constrainedArea = constrainArea(zoneInput)
+                ?: return emptyList()
 
-                val numberNearby = constrainedArea.world.getEntitiesOfClass(
-                    PokemonEntity::class.java,
-                    areaBox,
-                    PokemonEntity::countsTowardsSpawnCap
-                ).size
+            val areaBox = AABB.ofSize(
+                Vec3(constrainedArea.getCenter().toVec3f()),
+                ENTITY_LIMIT_CHUNK_RANGE * 16.0 * 2,
+                1000.0,
+                ENTITY_LIMIT_CHUNK_RANGE * 16.0 * 2
+            )
 
-                val chunksCovered = CHUNK_REACH * CHUNK_REACH
-                val areChunksFilled = numberNearby.toFloat() / chunksCovered >= Cobblemon.config.pokemonPerChunk
-
-                if (areChunksFilled && !config.permits.any { it?.isPermitted(cause, numberNearby) == true }) {
-                    return null
-                }
-
-                val slice = prospector.prospect(this, constrainedArea)
-                val contexts = resolver.resolve(this, contextCalculators, slice)
-                return getSpawningSelector().select(this, contexts)?.also {
-                    if (areChunksFilled && config.enableSpawnMessages) {
-                        LOGGER.info("Chunks are filled, but ${it.second.id} spawned anyway")
-                    }
-                }
+            if (!constrainedArea.world.isBoxLoaded(areaBox)) {
+                return emptyList()
             }
 
-            return null
+            val numberNearby = constrainedArea.world.getEntitiesOfClass(
+                PokemonEntity::class.java,
+                areaBox,
+                PokemonEntity::countsTowardsSpawnCap
+            ).size
+
+            val chunksCovered = ENTITY_LIMIT_CHUNK_RANGE * ENTITY_LIMIT_CHUNK_RANGE
+            val maxPokemonPerChunk = max(Cobblemon.config.pokemonPerChunk, zoneInput.cause.spawner.maxPokemonPerChunk)
+            val areChunksFilled = numberNearby.toFloat() / chunksCovered >= maxPokemonPerChunk
+            val bucket = chooseBucket(zoneInput.cause, influences)
+            if (areChunksFilled && !config.permits.any {
+                    it?.isPermitted(
+                        bucket = bucket,
+                        cause = zoneInput.cause,
+                        pokemonAmount = numberNearby
+                    ) == true
+                }) {
+                return emptyList()
+            }
+
+            val zone = generator.generate(spawner, constrainedArea)
+            val spawnablePositions = resolver.resolve(spawner, prioritizedAreaCalculators, zone)
+            val influences = influences + zone.unconditionalInfluences
+
+            return selector.select(
+                spawner = this,
+                bucket = bucket,
+                spawnablePositions = spawnablePositions,
+                maxSpawns = maxSpawns
+            )
         }
     }
 

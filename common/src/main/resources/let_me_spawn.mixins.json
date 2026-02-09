@@ -6,7 +6,7 @@
     "client": [
     ],
     "mixins": [
-        "AreaSpawnerMixin"
+        "SpawnerMixin"
     ],
     "injectors": {
         "defaultRequire": 1

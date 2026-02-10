@@ -13,7 +13,7 @@ import java.util.List;
 
 @Mixin(Spawner.class)
 public abstract class SpawnerMixin {
-    @Inject(method = "calculateSpawnActionsForArea", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "calculateSpawnActionsForArea", at = @At("HEAD"), cancellable = true, remap = false)
     protected void inject(SpawningZoneInput zoneInput, Integer maxSpawns, CallbackInfoReturnable<List<SpawnAction<?>>> cir) {
         cir.setReturnValue(LetMeSpawn.calculateSpawnActions((Spawner) this, zoneInput, maxSpawns));
         cir.cancel();

@@ -1,10 +1,10 @@
-package com.metacontent.mixin;
+package com.metacontent.letmespawn.mixin;
 
 import com.cobblemon.mod.common.api.spawning.detail.SpawnAction;
 import com.cobblemon.mod.common.api.spawning.spawner.BasicSpawner;
 import com.cobblemon.mod.common.api.spawning.spawner.Spawner;
 import com.cobblemon.mod.common.api.spawning.spawner.SpawningZoneInput;
-import com.metacontent.LetMeSpawn;
+import com.metacontent.letmespawn.LetMeSpawn;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

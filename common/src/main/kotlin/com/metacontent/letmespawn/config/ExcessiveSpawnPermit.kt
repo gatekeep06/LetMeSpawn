@@ -1,4 +1,4 @@
-package com.metacontent.config
+package com.metacontent.letmespawn.config
 
 import com.cobblemon.mod.common.api.spawning.SpawnBucket
 import com.cobblemon.mod.common.api.spawning.SpawnCause

@@ -1,6 +1,6 @@
-package com.metacontent.neoforge
+package com.metacontent.letmespawn.neoforge
 
-import com.metacontent.LetMeSpawn
+import com.metacontent.letmespawn.LetMeSpawn
 import net.neoforged.fml.common.Mod
 import thedarkcolour.kotlinforforge.neoforge.forge.MOD_BUS
 

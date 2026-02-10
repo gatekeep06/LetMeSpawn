@@ -1,17 +1,22 @@
-package com.metacontent
+package com.metacontent.letmespawn
 
 import com.cobblemon.mod.common.Cobblemon
 import com.cobblemon.mod.common.api.spawning.detail.SpawnAction
-import com.cobblemon.mod.common.api.spawning.position.calculators.SpawnablePositionCalculator.Companion.prioritizedAreaCalculators
+import com.cobblemon.mod.common.api.spawning.position.calculators.SpawnablePositionCalculator
 import com.cobblemon.mod.common.api.spawning.spawner.Spawner
-import com.cobblemon.mod.common.api.spawning.spawner.Spawner.Companion.ENTITY_LIMIT_CHUNK_RANGE
 import com.cobblemon.mod.common.api.spawning.spawner.SpawningZoneInput
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity
 import com.cobblemon.mod.common.platform.events.PlatformEvents
 import com.cobblemon.mod.common.util.asResource
 import com.cobblemon.mod.common.util.isBoxLoaded
 import com.cobblemon.mod.common.util.toVec3f
-import com.metacontent.config.*
+import com.metacontent.letmespawn.config.BucketSpawnPermit
+import com.metacontent.letmespawn.config.CompositeSpawnPermit
+import com.metacontent.letmespawn.config.ExcessiveSpawnPermit
+import com.metacontent.letmespawn.config.LevelSpawnPermit
+import com.metacontent.letmespawn.config.PermitConfig
+import com.metacontent.letmespawn.config.PlayerSpawnPermit
+import com.metacontent.letmespawn.config.SpawnPermitAdapter
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.Vec3
 import org.slf4j.Logger
@@ -43,9 +48,9 @@ object LetMeSpawn {
 
             val areaBox = AABB.ofSize(
                 Vec3(constrainedArea.getCenter().toVec3f()),
-                ENTITY_LIMIT_CHUNK_RANGE * 16.0 * 2,
+                Spawner.ENTITY_LIMIT_CHUNK_RANGE * 16.0 * 2,
                 1000.0,
-                ENTITY_LIMIT_CHUNK_RANGE * 16.0 * 2
+                Spawner.ENTITY_LIMIT_CHUNK_RANGE * 16.0 * 2
             )
 
             if (!constrainedArea.world.isBoxLoaded(areaBox)) {
@@ -58,7 +63,7 @@ object LetMeSpawn {
                 PokemonEntity::countsTowardsSpawnCap
             ).size
 
-            val chunksCovered = ENTITY_LIMIT_CHUNK_RANGE * ENTITY_LIMIT_CHUNK_RANGE
+            val chunksCovered = Spawner.ENTITY_LIMIT_CHUNK_RANGE * Spawner.ENTITY_LIMIT_CHUNK_RANGE
             val maxPokemonPerChunk = max(Cobblemon.config.pokemonPerChunk, zoneInput.cause.spawner.maxPokemonPerChunk)
             val areChunksFilled = numberNearby.toFloat() / chunksCovered >= maxPokemonPerChunk
 
@@ -76,7 +81,10 @@ object LetMeSpawn {
                 return emptyList()
             }
 
-            val spawnablePositions = resolver.resolve(spawner, prioritizedAreaCalculators, zone)
+            val spawnablePositions = resolver.resolve(
+                spawner,
+                SpawnablePositionCalculator.prioritizedAreaCalculators, zone
+            )
 
             return selector.select(
                 spawner = this,

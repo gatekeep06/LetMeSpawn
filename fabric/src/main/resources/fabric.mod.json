@@ -16,7 +16,7 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "com.metacontent.fabric.LetMeSpawnFabric"
+      "com.metacontent.letmespawn.fabric.LetMeSpawnFabric"
     ]
   },
   "mixins": [

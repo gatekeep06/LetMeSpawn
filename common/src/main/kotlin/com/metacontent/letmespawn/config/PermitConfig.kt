@@ -1,8 +1,8 @@
-package com.metacontent.config
+package com.metacontent.letmespawn.config
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.metacontent.LetMeSpawn
+import com.metacontent.letmespawn.LetMeSpawn
 import java.io.File
 import java.io.FileReader
 import java.io.FileWriter

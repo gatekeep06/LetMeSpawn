@@ -1,4 +1,4 @@
-package com.metacontent.config
+package com.metacontent.letmespawn.config
 
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
@@ -7,6 +7,7 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonSerializationContext
 import com.google.gson.JsonSerializer
 import java.lang.reflect.Type
+import kotlin.collections.get
 
 object SpawnPermitAdapter : JsonDeserializer<ExcessiveSpawnPermit>, JsonSerializer<ExcessiveSpawnPermit> {
     override fun deserialize(

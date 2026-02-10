@@ -61,7 +61,11 @@ object LetMeSpawn {
             val chunksCovered = ENTITY_LIMIT_CHUNK_RANGE * ENTITY_LIMIT_CHUNK_RANGE
             val maxPokemonPerChunk = max(Cobblemon.config.pokemonPerChunk, zoneInput.cause.spawner.maxPokemonPerChunk)
             val areChunksFilled = numberNearby.toFloat() / chunksCovered >= maxPokemonPerChunk
+
+            val zone = generator.generate(spawner, constrainedArea)
+            val influences = influences + zone.unconditionalInfluences
             val bucket = chooseBucket(zoneInput.cause, influences)
+
             if (areChunksFilled && !config.permits.any {
                     it?.isPermitted(
                         bucket = bucket,
@@ -72,16 +76,18 @@ object LetMeSpawn {
                 return emptyList()
             }
 
-            val zone = generator.generate(spawner, constrainedArea)
             val spawnablePositions = resolver.resolve(spawner, prioritizedAreaCalculators, zone)
-            val influences = influences + zone.unconditionalInfluences
 
             return selector.select(
                 spawner = this,
                 bucket = bucket,
                 spawnablePositions = spawnablePositions,
                 maxSpawns = maxSpawns
-            )
+            ).also { actions ->
+                if (config.enableSpawnMessages && areChunksFilled && actions.isNotEmpty()) {
+                    LOGGER.info("Chunks are filled, but ${actions.joinToString { it.detail.id }} spawned anyway")
+                }
+            }
         }
     }
 

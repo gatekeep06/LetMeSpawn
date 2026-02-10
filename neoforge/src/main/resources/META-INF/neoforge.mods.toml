@@ -27,5 +27,12 @@ versionRange = "[1.21.1,)"
 ordering = "NONE"
 side = "BOTH"
 
+[[dependencies.let_me_spawn]]
+modId = "cobblemon"
+type = "required"
+versionRange = "[1.7.0,)"
+ordering = "NONE"
+side = "BOTH"
+
 [[mixins]]
 config = "let_me_spawn.mixins.json"

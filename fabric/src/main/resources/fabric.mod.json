@@ -9,7 +9,7 @@
   ],
   "contact": {
     "homepage": "https://modrinth.com/mod/cobblemon-let-me-spawn",
-    "sources": ""
+    "sources": "https://github.com/gatekeep06/LetMeSpawn"
   },
   "license": "MPL-2.0",
   "icon": "assets/let_me_spawn/icon.png",
@@ -26,6 +26,7 @@
     "fabricloader": ">=0.16.9",
     "minecraft": "~1.21.1",
     "java": ">=21",
-    "fabric-api": "*"
+    "fabric-api": "*",
+    "cobblemon": ">=1.7.0"
   }
 }
